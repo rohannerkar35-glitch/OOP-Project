@@ -18,69 +18,102 @@ public:
     // Book Ticket
     void bookTicket()
     {
-        ofstream file("tickets.txt", ios::app);
-
-        cout << "\nEnter Ticket Number: ";
-        cin >> ticketNo;
-
-        cin.ignore();
-
-        cout << "Enter Passenger Name: ";
-        getline(cin, name);
-
-        cout << "Enter Age: ";
-        cin >> age;
-
-        cin.ignore();
-
-        cout << "Enter Gender (Male/Female): ";
-        getline(cin, gender);
-
-        cout << "Enter Source: ";
-        getline(cin, source);
-
-        cout << "Enter Destination: ";
-        getline(cin, destination);
-
-        // Original Ticket Price
-        if(age < 12)
+        try
         {
-            price = 100;
-        }
-        else if(age >= 60)
-        {
-            price = 150;
-        }
-        else
-        {
+            ofstream file("tickets.txt", ios::app);
+
+            cout << "\nEnter Ticket Number: ";
+            cin >> ticketNo;
+
+            if(cin.fail())
+                throw "Ticket Number must be numeric!";
+
+            if(ticketNo <= 0)
+                throw "Ticket Number must be positive!";
+
+            cin.ignore();
+
+            cout << "Enter Passenger Name: ";
+            getline(cin, name);
+
+            cout << "Enter Age: ";
+            cin >> age;
+
+            if(cin.fail())
+                throw "Age must be numeric!";
+
+            if(age < 0 || age > 120)
+                throw "Invalid Age!";
+
+            cin.ignore();
+
+            cout << "Enter Gender (Male/Female): ";
+            getline(cin, gender);
+
+            if(gender != "Male" && gender != "male" &&
+               gender != "Female" && gender != "female")
+            {
+                throw "Invalid Gender! Enter Male or Female.";
+            }
+
+            cout << "Enter Source: ";
+            getline(cin, source);
+
+            cout << "Enter Destination: ";
+            getline(cin, destination);
+
+            if(source == destination)
+                throw "Source and Destination cannot be same!";
+
+            // Base Fare
             price = 250;
-        }
 
-        // 50% Discount for Female
-        if(gender == "Female" || gender == "female")
+            // Female Discount
+            if(gender == "Female" || gender == "female")
+            {
+                price = price - (price * 0.50);
+                cout << "\n50% Female Discount Applied!";
+            }
+
+            // Senior Citizen Discount
+            if(age >= 60)
+            {
+                price = price - (price * 0.75);
+                cout << "\n75% Senior Citizen Discount Applied!";
+            }
+
+            file << ticketNo << endl;
+            file << name << endl;
+            file << age << endl;
+            file << gender << endl;
+            file << source << endl;
+            file << destination << endl;
+            file << price << endl;
+
+            file.close();
+
+            cout << "\n\nTicket Booked Successfully!";
+            cout << "\nFinal Ticket Price: Rs. " << price << endl;
+        }
+        catch(const char *msg)
         {
-            price = price - (price * 0.50);
-            cout << "\n50% Discount Applied for Female Passenger!\n";
+            cout << "\nError: " << msg << endl;
+
+            cin.clear();
+            cin.ignore(1000, '\n');
         }
-
-        file << ticketNo << endl;
-        file << name << endl;
-        file << age << endl;
-        file << gender << endl;
-        file << source << endl;
-        file << destination << endl;
-        file << price << endl;
-
-        file.close();
-
-        cout << "\nTicket Booked Successfully!\n";
-        cout << "Final Ticket Price: " << price << endl;
     }
 
-    // View All Tickets
+    // View Tickets
     void viewTickets()
     {
         ifstream file("tickets.txt");
+
+        if(!file)
+        {
+            cout << "\nNo Records Found!\n";
+            return;
+        }
 
         cout << "\n========== ALL RESERVATIONS ==========\n";
 
@@ -89,6 +122,7 @@ public:
             file.ignore();
 
             getline(file, name);
+
             file >> age;
             file.ignore();
 
@@ -105,7 +139,7 @@ public:
             cout << "\nGender        : " << gender;
             cout << "\nSource        : " << source;
             cout << "\nDestination   : " << destination;
-            cout << "\nTicket Price  : " << price;
+            cout << "\nTicket Price  : Rs. " << price;
             cout << "\n--------------------------------------\n";
         }
 
@@ -118,47 +152,63 @@ public:
         int searchNo;
         bool found = false;
 
-        ifstream file("tickets.txt");
-
-        cout << "\nEnter Ticket Number to Search: ";
-        cin >> searchNo;
-
-        while(file >> ticketNo)
+        try
         {
-            file.ignore();
+            cout << "\nEnter Ticket Number to Search: ";
+            cin >> searchNo;
 
-            getline(file, name);
-            file >> age;
-            file.ignore();
+            if(cin.fail())
+                throw "Ticket Number must be numeric!";
 
-            getline(file, gender);
-            getline(file, source);
-            getline(file, destination);
+            ifstream file("tickets.txt");
 
-            file >> price;
-            file.ignore();
-
-            if(ticketNo == searchNo)
+            while(file >> ticketNo)
             {
-                cout << "\nTicket Found!\n";
+                file.ignore();
 
-                cout << "Passenger Name: " << name << endl;
-                cout << "Age           : " << age << endl;
-                cout << "Gender        : " << gender << endl;
-                cout << "Source        : " << source << endl;
-                cout << "Destination   : " << destination << endl;
-                cout << "Ticket Price  : " << price << endl;
+                getline(file, name);
 
-                found = true;
+                file >> age;
+                file.ignore();
+
+                getline(file, gender);
+                getline(file, source);
+                getline(file, destination);
+
+                file >> price;
+                file.ignore();
+
+                if(ticketNo == searchNo)
+                {
+                    cout << "\nTicket Found!\n";
+
+                    cout << "Ticket Number : " << ticketNo << endl;
+                    cout << "Passenger Name: " << name << endl;
+                    cout << "Age           : " << age << endl;
+                    cout << "Gender        : " << gender << endl;
+                    cout << "Source        : " << source << endl;
+                    cout << "Destination   : " << destination << endl;
+                    cout << "Ticket Price  : Rs. " << price << endl;
+
+                    found = true;
+                    break;
+                }
             }
-        }
 
-        if(found == false)
+            if(!found)
+            {
+                cout << "\nTicket Not Found!\n";
+            }
+
+            file.close();
+        }
+        catch(const char *msg)
         {
-            cout << "\nTicket Not Found!\n";
-        }
+            cout << "\nError: " << msg << endl;
 
-        file.close();
+            cin.clear();
+            cin.ignore(1000, '\n');
+        }
     }
 
     // Cancel Ticket
@@ -167,56 +217,70 @@ public:
         int cancelNo;
         bool found = false;
 
-        ifstream file("tickets.txt");
-        ofstream temp("temp.txt");
-
-        cout << "\nEnter Ticket Number to Cancel: ";
-        cin >> cancelNo;
-
-        while(file >> ticketNo)
+        try
         {
-            file.ignore();
+            cout << "\nEnter Ticket Number to Cancel: ";
+            cin >> cancelNo;
 
-            getline(file, name);
-            file >> age;
-            file.ignore();
+            if(cin.fail())
+                throw "Ticket Number must be numeric!";
 
-            getline(file, gender);
-            getline(file, source);
-            getline(file, destination);
+            ifstream file("tickets.txt");
+            ofstream temp("temp.txt");
 
-            file >> price;
-            file.ignore();
-
-            if(ticketNo == cancelNo)
+            while(file >> ticketNo)
             {
-                found = true;
+                file.ignore();
+
+                getline(file, name);
+
+                file >> age;
+                file.ignore();
+
+                getline(file, gender);
+                getline(file, source);
+                getline(file, destination);
+
+                file >> price;
+                file.ignore();
+
+                if(ticketNo == cancelNo)
+                {
+                    found = true;
+                }
+                else
+                {
+                    temp << ticketNo << endl;
+                    temp << name << endl;
+                    temp << age << endl;
+                    temp << gender << endl;
+                    temp << source << endl;
+                    temp << destination << endl;
+                    temp << price << endl;
+                }
+            }
+
+            file.close();
+            temp.close();
+
+            remove("tickets.txt");
+            rename("temp.txt", "tickets.txt");
+
+            if(found)
+            {
+                cout << "\nTicket Cancelled Successfully!\n";
             }
             else
             {
-                temp << ticketNo << endl;
-                temp << name << endl;
-                temp << age << endl;
-                temp << gender << endl;
-                temp << source << endl;
-                temp << destination << endl;
-                temp << price << endl;
+                cout << "\nTicket Not Found!\n";
             }
         }
-
-        file.close();
-        temp.close();
-
-        remove("tickets.txt");
-        rename("temp.txt", "tickets.txt");
-
-        if(found)
+        catch(const char *msg)
         {
-            cout << "\nTicket Cancelled Successfully!\n";
-        }
-        else
-        {
-            cout << "\nTicket Not Found!\n";
+            cout << "\nError: " << msg << endl;
+
+            cin.clear();
+            cin.ignore(1000, '\n');
         }
     }
 };
@@ -228,41 +292,53 @@ int main()
 
     do
     {
-        cout << "\n========== ONLINE TICKET RESERVATION SYSTEM ==========\n";
-
-        cout << "1. Book Ticket\n";
-        cout << "2. View All Tickets\n";
-        cout << "3. Search Ticket\n";
-        cout << "4. Cancel Ticket\n";
-        cout << "5. Exit\n";
-
-        cout << "\nEnter Your Choice: ";
-        cin >> choice;
-
-        switch(choice)
+        try
         {
-            case 1:
-                r.bookTicket();
-                break;
+            cout << "\n\n========== ONLINE TICKET RESERVATION SYSTEM ==========\n";
+            cout << "1. Book Ticket\n";
+            cout << "2. View All Tickets\n";
+            cout << "3. Search Ticket\n";
+            cout << "4. Cancel Ticket\n";
+            cout << "5. Exit\n";
 
-            case 2:
-                r.viewTickets();
-                break;
+            cout << "\nEnter Your Choice: ";
+            cin >> choice;
 
-            case 3:
-                r.searchTicket();
-                break;
+            if(cin.fail())
+                throw "Choice must be numeric!";
 
-            case 4:
-                r.cancelTicket();
-                break;
+            if(choice < 1 || choice > 5)
+                throw "Please enter a valid choice (1-5)!";
 
-            case 5:
-                cout << "\nThank You!\n";
-                break;
+            switch(choice)
+            {
+                case 1:
+                    r.bookTicket();
+                    break;
 
-            default:
-                cout << "\nInvalid Choice!\n";
+                case 2:
+                    r.viewTickets();
+                    break;
+
+                case 3:
+                    r.searchTicket();
+                    break;
+
+                case 4:
+                    r.cancelTicket();
+                    break;
+
+                case 5:
+                    cout << "\nThank You for Using the Reservation System!\n";
+                    break;
+            }
+        }
+        catch(const char *msg)
+        {
+            cout << "\nError: " << msg << endl;
+
+            cin.clear();
+            cin.ignore(1000, '\n');
         }
 
     } while(choice != 5);
